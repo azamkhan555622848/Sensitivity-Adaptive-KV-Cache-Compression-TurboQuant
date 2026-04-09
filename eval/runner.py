@@ -20,13 +20,29 @@ def _make_cache_factory(method_config, model_info):
 
 def run_single(model, tokenizer, model_info, model_name, method_config, benchmark_config, output_dir):
     method_dict = {"type": method_config.type, "params": method_config.params}
-    cache_factory = _make_cache_factory(method_dict, model_info)
+
+    # Some models (Nemotron-NAS) use a custom cache incompatible with DynamicCache.
+    # For those, route compression through forward hooks on k_proj/v_proj instead.
+    use_hook_mode = "nemotron_real_attn_layers" in model_info
+
+    if use_hook_mode:
+        cache_factory = None
+        hook_config = method_dict
+    else:
+        cache_factory = _make_cache_factory(method_dict, model_info)
+        hook_config = None
+
     if benchmark_config.type == "perplexity":
         params = benchmark_config.params
         results = {}
         for ds in params.get("datasets", ["wikitext2"]):
-            results[ds] = evaluate_perplexity(model, tokenizer, cache_factory, dataset_name=ds,
-                                               max_seq_len=params.get("max_seq_len", 2048))
+            results[ds] = evaluate_perplexity(
+                model, tokenizer, cache_factory, dataset_name=ds,
+                max_seq_len=params.get("max_seq_len", 2048),
+                max_tokens=params.get("max_tokens", 0),
+                hook_compressor_config=hook_config,
+                model_info=model_info,
+            )
     elif benchmark_config.type == "needle":
         params = benchmark_config.params
         raw = evaluate_needle(model, tokenizer, cache_factory,

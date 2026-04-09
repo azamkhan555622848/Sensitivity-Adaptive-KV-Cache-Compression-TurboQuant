@@ -1,0 +1,3 @@
+name: nvidia/Llama-3_3-Nemotron-Super-49B-v1
+dtype: bfloat16
+max_seq_len: 8192

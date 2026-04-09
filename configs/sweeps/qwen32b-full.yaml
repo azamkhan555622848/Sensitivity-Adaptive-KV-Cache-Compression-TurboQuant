@@ -1,0 +1,24 @@
+output_dir: results/qwen32b-full
+models:
+  - configs/models/qwen2.5-32b.yaml
+methods:
+  - type: fp16
+  - type: turboquant-v3
+    params: {key_bits: 8, value_bits: 8, residual_window: 128}
+  - type: turboquant-v3
+    params: {key_bits: 6, value_bits: 6, residual_window: 128}
+  - type: turboquant-v3
+    params: {key_bits: 6, value_bits: 4, residual_window: 128}
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 2, residual_window: 128}
+  - type: turboquant-v3
+    params: {key_bits: 2, value_bits: 2, residual_window: 128}
+  - type: kivi
+    params: {bits: 4, residual_window: 128}
+  - type: kivi
+    params: {bits: 2, residual_window: 128}
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048, max_tokens: 50000}

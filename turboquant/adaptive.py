@@ -4,47 +4,125 @@ import torch.nn.functional as F
 from typing import Dict, List, Tuple, Optional
 from .compressors_v3 import MSECompressor
 
-def calibrate(model, tokenizer, n_samples=16, max_seq_len=512, dataset_name="c4"):
-    """Capture KV tensors from calibration samples via DynamicCache.
-    Returns {layer_idx: {"keys": Tensor, "values": Tensor}}."""
+def calibrate(model, tokenizer, n_samples=16, max_seq_len=512, dataset_name="c4",
+              seed: int = 42):
+    """Capture KV tensors from calibration samples via forward hooks on
+    ``k_proj`` and ``v_proj``. Hook-based capture bypasses any cache-related
+    quirks (including Gemma-3's sliding attention which corrupts DynamicCache
+    state on the final layers) and works for any architecture that exposes
+    ``self_attn.k_proj`` / ``v_proj``.
+
+    Returns {layer_idx: {"keys": Tensor, "values": Tensor}} where tensors are
+    shaped (B, n_kv_heads, S, head_dim).
+    """
     from datasets import load_dataset
-    from transformers import DynamicCache
+    import random
+
+    # Reproducible sample selection
+    rng = random.Random(seed)
+
     if dataset_name == "c4":
         ds = load_dataset("allenai/c4", "en", split="validation", streaming=True)
+    elif dataset_name == "the_stack":
+        ds = load_dataset("bigcode/the-stack-smol", split="train", streaming=True)
     else:
         ds = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
-    texts = []
+
+    # Collect a pool, then sample seeded
+    pool = []
     for item in ds:
-        text = item.get("text", "")
-        if len(text.strip()) > 100:
-            texts.append(text)
-        if len(texts) >= n_samples:
+        text = item.get("text", "") if isinstance(item, dict) else ""
+        if isinstance(text, str) and len(text.strip()) > 100:
+            pool.append(text)
+        if len(pool) >= max(n_samples * 8, 64):
             break
-    encodings = tokenizer(texts, return_tensors="pt", truncation=True, max_length=max_seq_len, padding=True)
+    if len(pool) == 0:
+        # Fallback: wikitext test split is a list of strings
+        ds = load_dataset("wikitext", "wikitext-2-raw-v1", split="test")
+        pool = [t for t in ds["text"] if len(t.strip()) > 100]
+    rng.shuffle(pool)
+    texts = pool[:n_samples]
+
+    encodings = tokenizer(texts, return_tensors="pt", truncation=True,
+                          max_length=max_seq_len, padding=True)
     device = next(model.parameters()).device
-    all_keys = {}   # layer_idx -> list of tensors
-    all_values = {}
-    with torch.no_grad():
-        for i in range(0, len(texts), 4):
-            batch_ids = encodings["input_ids"][i:i+4].to(device)
-            batch_mask = encodings["attention_mask"][i:i+4].to(device)
-            cache = DynamicCache()
-            outputs = model(batch_ids, attention_mask=batch_mask, use_cache=True, past_key_values=cache)
-            # Extract KV from cache — DynamicCache.layers[i] has .keys and .values
-            for layer_idx in range(len(cache.layers)):
-                layer_cache = cache.layers[layer_idx]
-                k, v = layer_cache.keys, layer_cache.values
-                if layer_idx not in all_keys:
-                    all_keys[layer_idx] = []
-                    all_values[layer_idx] = []
-                all_keys[layer_idx].append(k.detach().cpu())
-                all_values[layer_idx].append(v.detach().cpu())
+
+    # Find the layers module. Supports standard HF layouts (model.model.layers)
+    # and single-layer custom layouts.
+    base = getattr(model, "model", model)
+    layers_mod = getattr(base, "layers", None)
+    if layers_mod is None:
+        raise RuntimeError("Could not find layers attribute on model for calibration")
+
+    # Infer KV head shape from the model config. For nested configs (Gemma-3
+    # text_config), walk down.
+    cfg = getattr(model.config, "text_config", model.config)
+    n_heads = cfg.num_attention_heads
+    n_kv_heads = getattr(cfg, "num_key_value_heads", None) or n_heads
+    head_dim = getattr(cfg, "head_dim", None) or (cfg.hidden_size // n_heads)
+
+    per_layer_k: Dict[int, List[torch.Tensor]] = {}
+    per_layer_v: Dict[int, List[torch.Tensor]] = {}
+    handles = []
+
+    def make_hook(layer_idx: int, is_key: bool):
+        def hook(module, inputs, output):
+            out = output[0] if isinstance(output, tuple) else output
+            if not isinstance(out, torch.Tensor):
+                return output
+            B, S, D_total = out.shape
+            if D_total != n_kv_heads * head_dim:
+                # Layer has a different head layout (e.g., a sparsified/pruned
+                # attention block). Skip capture for this layer.
+                return output
+            x = out.view(B, S, n_kv_heads, head_dim).transpose(1, 2).contiguous()
+            store = per_layer_k if is_key else per_layer_v
+            store.setdefault(layer_idx, []).append(x.detach().to("cpu").float())
+            return output
+        return hook
+
+    # Install hooks on every layer that has a standard k_proj/v_proj pair.
+    captured_layer_ids = []
+    for layer_idx, layer in enumerate(layers_mod):
+        attn = getattr(layer, "self_attn", None)
+        if attn is None:
+            continue
+        k_proj = getattr(attn, "k_proj", None)
+        v_proj = getattr(attn, "v_proj", None)
+        if k_proj is None or v_proj is None:
+            continue
+        handles.append(k_proj.register_forward_hook(make_hook(layer_idx, True)))
+        handles.append(v_proj.register_forward_hook(make_hook(layer_idx, False)))
+        captured_layer_ids.append(layer_idx)
+
+    try:
+        with torch.no_grad():
+            for i in range(0, len(texts), 4):
+                batch_ids = encodings["input_ids"][i:i + 4].to(device)
+                batch_mask = encodings["attention_mask"][i:i + 4].to(device)
+                try:
+                    model(batch_ids, attention_mask=batch_mask, use_cache=False)
+                except Exception:
+                    # Fall back to forward without attention_mask for models
+                    # that reject batched padded input in this mode.
+                    model(batch_ids, use_cache=False)
+    finally:
+        for h in handles:
+            h.remove()
+
     result = {}
-    for layer_idx in all_keys:
-        result[layer_idx] = {
-            "keys": torch.cat(all_keys[layer_idx], dim=0),
-            "values": torch.cat(all_values[layer_idx], dim=0)
-        }
+    for layer_idx in captured_layer_ids:
+        ks = per_layer_k.get(layer_idx, [])
+        vs = per_layer_v.get(layer_idx, [])
+        if not ks or not vs:
+            continue
+        K = torch.cat(ks, dim=0)
+        V = torch.cat(vs, dim=0)
+        # Skip layers where capture produced NaN/Inf (e.g., pruned or no-op
+        # attention layers). The adaptive allocator will simply ignore them.
+        if not torch.isfinite(K).all() or not torch.isfinite(V).all():
+            continue
+        result[layer_idx] = {"keys": K, "values": V}
     return result
 
 def profile_layer_sensitivity(model, tokenizer, n_samples=16, max_seq_len=512, bit_options=None):
