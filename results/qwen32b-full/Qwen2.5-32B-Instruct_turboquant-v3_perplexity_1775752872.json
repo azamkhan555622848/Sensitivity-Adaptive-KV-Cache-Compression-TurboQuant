@@ -1,0 +1,26 @@
+{
+  "model": "Qwen/Qwen2.5-32B-Instruct",
+  "method": "turboquant-v3",
+  "method_config": {
+    "key_bits": 6,
+    "value_bits": 4,
+    "residual_window": 128
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048,
+    "max_tokens": 50000
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 3.9907839079151577,
+      "loss": 1.383987679753595,
+      "n_tokens": 49999
+    }
+  },
+  "timestamp": "2026-04-10T00:41:12Z",
+  "git_sha": "unknown"
+}

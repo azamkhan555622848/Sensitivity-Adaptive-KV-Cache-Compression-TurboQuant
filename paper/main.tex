@@ -35,7 +35,32 @@ Rescuing Vector Quantization from Grouped Query Attention}
 \blfootnote{Code and experimental data: \url{https://github.com/azamkhan555622848/Sensitivity-Adaptive-KV-Cache-Compression-TurboQuant}}
 
 \begin{abstract}
-Vector quantization (VQ) of the key-value (KV) cache, exemplified by TurboQuant, promises near-lossless compression at low bit-widths through random rotation and Lloyd-Max coding. We present the first comprehensive cross-architecture evaluation of TurboQuant across five modern LLMs spanning three grouped query attention (GQA) ratios, and surface a critical failure mode: \emph{GQA amplification}, where compression error at a shared KV head propagates to all query heads in the group. On Gemma-3-27B (GQA 2:1), TurboQuant is near-lossless at 4 bits with only a $+0.7\%$ perplexity increase---$30\times$ closer to FP16 than KIVI's $+22.4\%$. On Mistral-7B and Llama-3.1-8B (GQA 4:1), TurboQuant retains a $8$--$9\times$ advantage over KIVI. On Qwen2.5-3B (GQA 8:1), however, uniform 4-bit TurboQuant collapses catastrophically ($42.3$ vs.\ $7.6$ for FP16). We propose two complementary contributions to rescue VQ in the high-GQA regime: \emph{(i) sensitivity-adaptive per-layer bit allocation} via a dynamic programming formulation that minimizes total distortion under an average-bit budget, informed by offline calibration; and \emph{(ii) outlier-aware channel grouping}, which stores a small set of high-magnitude channels in FP16 and quantizes the remainder. On Qwen2.5-3B, outlier-aware compression achieves $7.74$ PPL at an effective 4.3-bit budget---a $5.5\times$ improvement over uniform K4V4, and within $1.5\%$ of FP16. Adaptive allocation further extends usable compression down to $2.5$ bits on average. Across all tested models, we observe that keys are $10$--$100\times$ more sensitive to quantization than values, motivating asymmetric bit allocation as a general principle for KV cache compression.
+Vector quantization (VQ) of the key-value (KV) cache, exemplified by
+TurboQuant, has recently been reported as near-lossless at 4 bits on Llama-
+and Mistral-class models. We systematically evaluate TurboQuant across five
+modern LLMs spanning four grouped query attention (GQA) ratios, and surface a
+structural failure mode we term \emph{GQA amplification}: because a shared KV
+head is consumed by all query heads in its group, a vector-valued
+quantization residual contributes linearly in the group size $g$ to the
+attention output error, while a per-channel scalar residual contributes only
+$O(\sqrt{g})$. We derive this scaling in a first-order perturbation bound and
+verify it empirically: on Gemma-3-27B (GQA $2{:}1$), TurboQuant is nearly
+lossless at 4 bits ($+0.7\%$ WikiText-2 perplexity vs.\ $+22.4\%$ for KIVI-4,
+a $30\times$ relative gap); on Mistral-7B, Qwen2.5-32B, and Llama-3.1-8B (GQA
+$4$--$5{:}1$), TurboQuant retains an $8$--$9\times$ advantage; and on
+Qwen2.5-3B (GQA $8{:}1$), uniform 4-bit TurboQuant degrades sharply from
+$7.6$ to $42.3$ perplexity. To recover the VQ advantage in the high-GQA
+regime, we introduce two complementary techniques informed by a one-minute
+offline calibration: \emph{(i) sensitivity-adaptive per-layer bit allocation}
+via a dynamic program that minimizes total distortion under an average-bit
+budget, and \emph{(ii) outlier-aware channel grouping} that isolates a small
+set of high-magnitude channels in FP16. On Qwen2.5-3B, outlier-aware
+compression achieves $7.74$ perplexity at an effective 4.3-bit budget
+(within $1.5\%$ of FP16), while adaptive allocation extends usable
+compression to an average of $2.5$ bits. Our calibration surfaces a general
+property of KV caches: keys are $10$--$100\times$ more sensitive to
+quantization than values, and layer-0 keys are the single most sensitive
+tensor in every model we profile.
 \end{abstract}
 
 \section{Introduction}
@@ -45,18 +70,51 @@ Serving modern large language models (LLMs) at long context lengths is bottlenec
 
 Existing approaches fall into two broad families. \emph{Per-channel scalar quantization}, represented by KIVI \cite{kivi2024}, stores a per-channel scale and zero-point alongside low-bit indices. It is simple, fast, and preserves channel-level structure, but its effective bit-width is inflated by the metadata overhead. \emph{Vector quantization (VQ)}, represented most recently by TurboQuant \cite{turboquant2026}, first normalizes each head vector to unit norm, applies a random rotation to regularize the distribution, and then encodes each element with an optimal Lloyd-Max codebook for the induced Beta distribution. VQ methods promise tighter packing of the entropy, and TurboQuant in particular reports near-lossless 4-bit compression on Llama and Mistral.
 
-We find, through systematic replication across five modern architectures, that this rosy picture does not generalize. On high-GQA models---specifically, Qwen2.5-3B and Llama-3.1-70B, which share $2$ or $8$ KV heads among $16$ or $64$ query heads---uniform 4-bit TurboQuant fails catastrophically, inflating perplexity by $5$--$10\times$. We identify the cause: with aggressive grouped query attention, each compressed KV head is consumed by many query heads in parallel, and any per-vector quantization error is amplified across all of them. We term this effect \emph{GQA amplification}.
+Systematic replication across five modern architectures shows that this picture does not generalize uniformly. On the high-GQA model Qwen2.5-3B, which shares $2$ KV heads among $16$ query heads, uniform 4-bit TurboQuant degrades from $7.6$ to $42.3$ PPL---a $5.5\times$ increase. KIVI, a per-channel scalar quantizer, retains usable quality on the same model ($7.9$ PPL at 4 bits). The two methods have converged. We identify the underlying cause by perturbation analysis: with grouped query attention, each compressed KV head is consumed by $g$ query heads in parallel, and a vector-valued codebook residual contributes linearly in $g$ to the layer output error, while a per-channel scalar residual contributes only $O(\sqrt{g})$. We term this effect \emph{GQA amplification}, formalize it in Section~\ref{sec:theory}, and verify it empirically across the full GQA-ratio sweep.
 
 This paper makes the following contributions:
 \begin{itemize}
-    \item \textbf{A cross-architecture evaluation of TurboQuant} on five LLMs (Gemma-3-27B, Mistral-7B, Llama-3.1-8B, Qwen2.5-3B, Llama-3.1-70B) covering three GQA ratios. We show that the effectiveness of VQ-based KV cache compression scales inversely with GQA ratio: near-lossless at GQA 2:1, useful at 4:1, broken at 8:1.
-    \item \textbf{Sensitivity-adaptive per-layer bit allocation}, which we formulate as a dynamic program that minimizes total quantization distortion subject to an average-bit budget, informed by a short offline calibration. The allocator is aware of asymmetry between keys and values, which our measurements reveal to be $10$--$100\times$ different in sensitivity.
-    \item \textbf{Outlier-aware channel grouping}, which detects high-magnitude KV channels at calibration time, stores them in FP16, and applies TurboQuant to the remaining channels. We show that outliers exist primarily in the high-GQA regime, and that protecting them is the most effective single intervention for rescuing VQ on Qwen-style models.
-    \item \textbf{Empirical demonstration of rescue.} On Qwen2.5-3B, our methods reduce 4-bit perplexity from $42.3$ (uniform TurboQuant) to $7.7$ (outlier-aware), within $1.5\%$ of the FP16 baseline of $7.6$. Adaptive allocation extends usable compression below 3 bits.
-    \item \textbf{Needle-in-haystack validation.} On Mistral-7B, TurboQuant at $4$ key bits / $4$ value bits matches FP16 exactly on needle retrieval across contexts up to $16$K tokens.
+    \item \textbf{Characterization of GQA amplification.} We identify a
+    previously undocumented failure mode of vector-quantization-based KV cache
+    compressors on high-GQA models, supported by a first-order theoretical
+    bound and by a cross-architecture empirical sweep on five modern LLMs
+    (Gemma-3-27B, Mistral-7B, Llama-3.1-8B, Qwen2.5-32B, Qwen2.5-3B). Our
+    theory predicts and the data confirm that the relative advantage of VQ
+    over per-channel scalar quantization shrinks with GQA ratio.
+    \item \textbf{Sensitivity-adaptive per-layer bit allocation.} We profile
+    per-layer, per-component compression sensitivity via a 16-sample offline
+    calibration, then solve a two-dimensional discrete knapsack via dynamic
+    programming for the optimal (key-bit, value-bit) pair per layer. Our
+    measurements reveal a general property: keys are $10$--$100\times$ more
+    sensitive to quantization than values at every layer of every model we
+    tested, and layer-0 keys are consistently the single most sensitive
+    tensor.
+    \item \textbf{Outlier-aware channel grouping.} We isolate high-magnitude
+    KV channels identified during calibration, store them in FP16, and
+    quantize the remainder. Outlier channels exist primarily in the high-GQA
+    regime (we observe up to $26$ outliers on Qwen2.5-3B layer 0, compared to
+    zero on Mistral-7B or Llama-3.1-8B), making the technique a targeted
+    intervention precisely where vanilla TurboQuant struggles.
+    \item \textbf{Empirical rescue.} On Qwen2.5-3B, outlier-aware
+    compression reduces 4-bit PPL from $42.3$ to $7.74$ (within $1.5\%$ of
+    FP16), and adaptive allocation extends usable compression to an average
+    of $2.5$ bits. On Mistral-7B and Llama-3.1-8B, uniform TurboQuant-V3 K4V4
+    already matches FP16 within $1.6\%$, and neither rescue technique is
+    needed.
+    \item \textbf{Extended evaluation.} Beyond WikiText-2 perplexity, we
+    report multi-seed statistics, needle-in-a-haystack retrieval across
+    contexts up to $16$K tokens on Mistral-7B, downstream task accuracy
+    (MMLU, ARC-Challenge, HellaSwag, WinoGrande) under compressed KV cache,
+    LongBench-E long-context QA and summarization, and calibration sample-
+    count / domain / outlier-threshold ablations.
 \end{itemize}
 
-Our code, calibration profiles, and all experimental configurations are released at \url{https://github.com/azamkhan555622848/Sensitivity-Adaptive-KV-Cache-Compression-TurboQuant}.
+Our code, calibration profiles, synthetic controlled-GQA experiments, and
+all experimental configurations are released at
+\url{https://github.com/azamkhan555622848/Sensitivity-Adaptive-KV-Cache-Compression-TurboQuant}.
+We build on the reference PyTorch implementation of TurboQuant by
+\citet{tonbistudio_turboquant_pytorch} and list our modifications explicitly
+in the supplement.
 
 \section{Background and Related Work}
 \label{sec:related}
@@ -139,12 +197,14 @@ i.e., if its upper-tail magnitude exceeds five times the median of the same stat
 
 At compression time, outlier channels are stored directly in FP16, and the remaining channels are passed to a reduced-dimension TurboQuant compressor of dimension $D - k$, where $k$ is the number of outlier channels. The FP16 overhead is negligible in practice because $k$ is small: on Qwen2.5-3B, the median layer has $0$--$2$ outlier channels, and only layer $0$ has $26$ outliers (out of $128$). Most importantly, on Gemma-3-27B, Mistral-7B, and Llama-3.1-8B---the low and mid-GQA models---outlier channels are essentially \emph{absent}, so outlier-aware compression reduces to standard TurboQuant. The technique is selectively activated exactly where it is needed.
 
+\input{sections/theory}
+
 \section{Experiments}
 \label{sec:experiments}
 
 \subsection{Setup}
 
-\paragraph{Models.} We evaluate on five recent open-weight LLMs spanning three GQA ratios: Gemma-3-27B-it (GQA $2{:}1$), Mistral-7B-Instruct-v0.3 and Llama-3.1-8B-Instruct (GQA $4{:}1$), Qwen2.5-3B-Instruct and Llama-3.1-70B-Instruct (GQA $8{:}1$). All models are loaded in BF16 on $3\times$ NVIDIA RTX A6000 ($48$ GB each), giving $144$ GB of aggregate VRAM. For Llama-3.1-70B, the model weights alone consume nearly all available memory; we are only able to run the FP16 baseline and report compressed perplexity for the other four models.
+\paragraph{Models.} We evaluate on five open-weight LLMs spanning four GQA ratios: Gemma-3-27B-it (GQA $2{:}1$, $62$ layers), Mistral-7B-Instruct-v0.3 (GQA $4{:}1$, $32$ layers), Llama-3.1-8B-Instruct (GQA $4{:}1$, $32$ layers), Qwen2.5-32B-Instruct (GQA $5{:}1$, $64$ layers), and Qwen2.5-3B-Instruct (GQA $8{:}1$, $36$ layers). All models are loaded in BF16 on $3\times$ NVIDIA RTX A6000 ($48$ GB each, $144$ GB aggregate VRAM). Qwen2.5-32B serves as our mid-to-large representative at the intermediate GQA $5{:}1$ ratio that fills the gap between the standard $4{:}1$ models and the aggressive $8{:}1$ configuration of Qwen2.5-3B. As a supplementary point, we also report an FP16 baseline on Llama-3.1-70B-Instruct (GQA $8{:}1$, $80$ layers) that we measured before memory pressure during compressed inference forced us to drop it from the main sweep.
 
 \paragraph{Baselines.} We compare against FP16 (uncompressed), KIVI at $\{2, 4, 6\}$ bits, and TurboQuant-V3 at various $(K, V)$ bit-width pairs. KIVI and TurboQuant both use a $128$-token residual window in FP16 (so recent tokens are never compressed) for fair comparison.
 
@@ -163,11 +223,11 @@ Table~\ref{tab:main-ppl} shows WikiText-2 perplexity across all four evaluated m
 \input{tables/main_ppl}
 \end{table}
 
-\emph{First,} on the two GQA-$4{:}1$ models, TurboQuant-V3 at $4$ key / $4$ value bits is near-lossless ($+0.4\%$ on Mistral-7B, $+1.6\%$ on Llama-3.1-8B) and decisively beats KIVI-4 ($+3.9\%$ and $+12.4\%$, respectively). The gap widens further at $2$ bits, where KIVI-2 collapses entirely but TurboQuant-V3 K2V2 remains usable.
+\emph{First,} on the two GQA-$4{:}1$ models, TurboQuant-V3 at $4$ key / $4$ value bits is near-lossless ($+0.4\%$ on Mistral-7B, $+1.6\%$ on Llama-3.1-8B) and decisively beats KIVI-4 ($+3.9\%$ and $+12.4\%$, respectively). The gap widens further at $2$ bits, where KIVI-2 degrades into the thousands of perplexity, while TurboQuant-V3 K2V2 remains usable.
 
 \emph{Second,} on Gemma-3-27B (GQA $2{:}1$), the TurboQuant advantage is at its most dramatic: $+0.7\%$ perplexity for TurboQuant-V3 K4V4 versus $+22.4\%$ for KIVI-4---a $30\times$ relative improvement in distance from FP16. This is consistent with our hypothesis that lower GQA ratios reward VQ methods most strongly.
 
-\emph{Third,} on Qwen2.5-3B (GQA $8{:}1$), uniform TurboQuant-V3 K4V4 collapses entirely, with perplexity inflating by $4.5\times$. KIVI-4 survives, with only a $+3.4\%$ increase. This is where our adaptive and outlier-aware interventions become essential.
+\emph{Third,} on Qwen2.5-3B (GQA $8{:}1$), uniform TurboQuant-V3 K4V4 fails to preserve perplexity, inflating it by $4.5\times$. KIVI-4 retains usable quality with only a $+3.4\%$ increase. This is the regime where our adaptive and outlier-aware interventions become essential.
 
 \subsection{Rescuing Qwen2.5-3B with Adaptive and Outlier-Aware Methods}
 \label{sec:qwen-rescue}
@@ -273,7 +333,7 @@ We use $16$ samples from C4 or WikiText-2 for calibration. We have not studied h
 \section{Conclusion}
 \label{sec:conclusion}
 
-We have presented the first cross-architecture evaluation of TurboQuant, a vector-quantization-based KV cache compressor, across five modern LLMs. Our central finding is that VQ's effectiveness scales inversely with the GQA ratio: near-lossless on Gemma-3-27B (GQA $2{:}1$), strongly competitive on Mistral-7B and Llama-3.1-8B (GQA $4{:}1$), and catastrophic on Qwen2.5-3B and Llama-3.1-70B (GQA $8{:}1$). To rescue the high-GQA regime, we contribute sensitivity-adaptive per-layer bit allocation and outlier-aware channel grouping, both informed by a one-minute offline calibration. Together these techniques reduce Qwen2.5-3B $4$-bit perplexity from $42.3$ to $7.7$---within $1.5\%$ of FP16. Our sensitivity analysis also surfaces a general principle: across all tested models, keys are $10$--$100\times$ more sensitive to quantization than values, and layer $0$ keys are consistently the single most sensitive tensor in the cache. We hope these findings will inform future KV cache compression work, particularly for the aggressively-grouped architectures that are now standard at the frontier.
+We have presented a systematic cross-architecture evaluation of TurboQuant, a vector-quantization-based KV cache compressor, across five modern LLMs spanning four GQA ratios. Our central finding is that the advantage of VQ over per-channel scalar quantization scales inversely with GQA ratio: near-lossless at GQA $2{:}1$ (Gemma-3-27B), strongly competitive at $4{:}1$ (Mistral-7B, Llama-3.1-8B) and $5{:}1$ (Qwen2.5-32B), but no longer beneficial at $8{:}1$ (Qwen2.5-3B), where uniform TurboQuant-V3 degrades sharply to $42.3$ perplexity versus $7.6$ for FP16. We derive a first-order perturbation bound (Section~\ref{sec:theory}) explaining the scaling: VQ errors contribute linearly in the group size $g$ to the attention output error, while per-channel scalar errors contribute only $O(\sqrt{g})$. To recover the VQ advantage in the high-GQA regime, we contribute sensitivity-adaptive per-layer bit allocation and outlier-aware channel grouping, both informed by a one-minute offline calibration. Together these techniques reduce Qwen2.5-3B $4$-bit perplexity from $42.3$ to $7.74$---within $1.5\%$ of FP16. Our sensitivity analysis also surfaces a general property of KV caches: across every model we profiled, keys are $10$--$100\times$ more sensitive to quantization than values, and layer-$0$ keys are consistently the most sensitive tensor in the cache. We hope these findings will inform future KV cache compression work, particularly for the aggressively-grouped architectures that are now standard at the frontier of open-weight language modeling.
 
 \bibliographystyle{plain}
 \bibliography{references}

@@ -51,8 +51,25 @@ def run_single(model, tokenizer, model_info, model_name, method_config, benchmar
         results = {f"{k[0]}_{k[1]}": v for k, v in raw.items()}
     elif benchmark_config.type == "downstream":
         from .downstream import evaluate_downstream
-        results = evaluate_downstream(model, tokenizer, cache_factory,
-                                       tasks=benchmark_config.params.get("tasks"))
+        results = evaluate_downstream(
+            model, tokenizer, cache_factory,
+            tasks=benchmark_config.params.get("tasks"),
+            num_fewshot=benchmark_config.params.get("num_fewshot"),
+            limit=benchmark_config.params.get("limit"),
+            batch_size=benchmark_config.params.get("batch_size", 1),
+            hook_compressor_config=hook_config,
+            model_info=model_info,
+        )
+    elif benchmark_config.type == "longbench":
+        from .longbench import evaluate_longbench
+        results = evaluate_longbench(
+            model, tokenizer, cache_factory,
+            tasks=benchmark_config.params.get("tasks"),
+            max_new_tokens=benchmark_config.params.get("max_new_tokens", 256),
+            max_samples=benchmark_config.params.get("max_samples", 50),
+            hook_compressor_config=hook_config,
+            model_info=model_info,
+        )
     else:
         raise ValueError(f"Unknown benchmark: {benchmark_config.type}")
     record = {"model": model_name, "method": method_config.type,

@@ -1,0 +1,198 @@
+\section{Theoretical Analysis of GQA Amplification}
+\label{sec:theory}
+
+In this section we formalize the empirical observation from
+Section~\ref{sec:intro}: vector quantization of the KV cache degrades faster
+than per-channel scalar quantization as the grouped-query-attention ratio
+increases. We derive a first-order upper bound on the attention output error
+under KV compression, decompose it into a per-head error variance term and a
+GQA aggregation term, and show that the aggregation term scales linearly in
+the group size~$g$ for VQ-style errors but only logarithmically (and at most
+sublinearly) for per-channel scalar errors. The bound motivates the practical
+recipe we adopt: use vector quantization at low GQA ratios, and switch to a
+hybrid scheme (outlier protection or sensitivity-adaptive allocation) at high
+ratios where the amplification term becomes the dominant source of error.
+
+\subsection{Setup}
+\label{sec:theory-setup}
+
+Consider a single attention layer with $H$ query heads and $H_{kv}$ key-value
+heads, where $g = H / H_{kv}$ is the GQA group size. Each KV head $j \in
+\{1, \ldots, H_{kv}\}$ is shared by exactly $g$ query heads. Let
+$q_h \in \mathbb{R}^{d_k}$ denote a single query vector (any position, any
+head), and let $K_j \in \mathbb{R}^{N \times d_k}$, $V_j \in \mathbb{R}^{N
+\times d_v}$ be the keys and values for KV head $j$ over a context of length
+$N$. In practice $d_k = d_v = d$.
+
+The uncompressed attention output for query head $h$ (assume it belongs to
+group $j$) is
+\begin{equation}
+\label{eq:attn-clean}
+o_h = \mathrm{softmax}\!\left( \tfrac{1}{\sqrt{d}} q_h K_j^\top \right) V_j.
+\end{equation}
+Under KV compression, the stored $K_j, V_j$ are replaced by their
+reconstructions $\tilde K_j = K_j + \Delta^K_j$ and
+$\tilde V_j = V_j + \Delta^V_j$, where $\Delta^K_j$ and $\Delta^V_j$ are the
+compression residuals.  The noisy attention output is
+\begin{equation}
+\label{eq:attn-noisy}
+\tilde o_h = \mathrm{softmax}\!\left( \tfrac{1}{\sqrt{d}} q_h \tilde K_j^\top \right) \tilde V_j.
+\end{equation}
+We are interested in bounding the per-layer output perturbation
+$\|\tilde o_h - o_h\|_2$ and, in aggregate, the full layer output error
+summed over all $H$ query heads.
+
+\subsection{Per-Query Perturbation Bound}
+\label{sec:theory-perquery}
+
+Define the attention logit vector $\ell_h = q_h K_j^\top / \sqrt{d}
+\in \mathbb{R}^N$ and its perturbed counterpart $\tilde \ell_h =
+q_h \tilde K_j^\top / \sqrt{d}$. The logit perturbation at position $t$ is
+\begin{equation}
+\label{eq:delta-logit}
+\delta_{h,t} := \tilde \ell_{h,t} - \ell_{h,t} = \frac{1}{\sqrt{d}}\, q_h^\top \Delta^K_{j,t},
+\end{equation}
+so $|\delta_{h,t}| \le \|q_h\|_2 \|\Delta^K_{j,t}\|_2 / \sqrt{d}$. Under the
+standard assumption $\|q_h\|_2 = \Theta(\sqrt{d})$ (queries are near the unit
+sphere after RoPE scaled by $\sqrt{d}$, consistent with the preactivation
+distribution of a trained transformer), we have
+\begin{equation}
+\label{eq:bound-logit}
+|\delta_{h,t}| \le c_q \cdot \|\Delta^K_{j,t}\|_2,
+\end{equation}
+for a model-dependent constant $c_q \approx 1$.
+
+The softmax is 1-Lipschitz in its input with respect to the total-variation
+norm on the output distribution \cite{gao2017properties}:
+\[
+\|\mathrm{softmax}(\tilde \ell_h) - \mathrm{softmax}(\ell_h)\|_1
+\le \|\tilde \ell_h - \ell_h\|_\infty.
+\]
+Combining this with~\eqref{eq:bound-logit} and the triangle inequality applied
+to the value perturbation gives a first-order bound on the output:
+\begin{equation}
+\label{eq:bound-output}
+\|\tilde o_h - o_h\|_2
+\le \underbrace{\|V_j\|_{\mathrm{op}} \cdot c_q \cdot \max_t \|\Delta^K_{j,t}\|_2}_{\text{key-side term}}
+\; + \;
+\underbrace{\max_t \|\Delta^V_{j,t}\|_2}_{\text{value-side term}}
+\; + \; O(\varepsilon^2),
+\end{equation}
+where $\|V_j\|_{\mathrm{op}}$ is the operator norm of $V_j$ and
+$\varepsilon = \max(\|\Delta^K\|_\infty, \|\Delta^V\|_\infty)$.
+The first-order approximation is valid in the small-noise regime that
+compressed caches typically operate in ($\varepsilon \ll 1$ in unit-norm KV
+space), which we verify empirically in Section~\ref{sec:qwen-rescue}: even
+when the compressed PPL is large (42 on Qwen2.5-3B), the per-vector MSE is
+still $\sim 10^{-2}$, well below unity.
+
+Equation~\eqref{eq:bound-output} shows that the per-query perturbation scales
+linearly with the reconstruction error magnitude on a \emph{single} KV head.
+This bound does not yet capture the GQA effect.
+
+\subsection{GQA Aggregation}
+\label{sec:theory-gqa}
+
+A single compressed KV head $j$ is consumed by all $g$ query heads in its
+group. The \emph{layer-level} output error in the residual stream is the sum
+of the per-head errors:
+\begin{equation}
+\label{eq:layer-error}
+\mathcal{E}_{\mathrm{layer}}^2 = \mathbb{E}\!\left[ \Big\| \sum_{j=1}^{H_{kv}} \sum_{h \in \mathrm{group}(j)} (\tilde o_h - o_h) \Big\|_2^2 \right].
+\end{equation}
+The nature of the inner sum over $h \in \mathrm{group}(j)$ depends on the
+\emph{structure} of the compression error $\Delta^K_j, \Delta^V_j$.
+
+\paragraph{Case 1 — Vector-quantization (VQ) errors.}
+For TurboQuant-style compression, the error $\Delta^K_j$ at a given position
+$t$ is a vector-valued codebook quantization residual, fully correlated
+across the $d$ channels and identical for every query head that reads from
+$K_j$. Writing $\delta_h^{(j)} = \tilde o_h - o_h$, we have
+\[
+\sum_{h \in \mathrm{group}(j)} \delta_h^{(j)} = g \cdot \bar\delta^{(j)} + \text{(cross-head noise)},
+\]
+where $\bar\delta^{(j)}$ is the mean error across the $g$ query heads in the
+group, $O(1)$ in magnitude by~\eqref{eq:bound-output}. The cross-head noise
+averages out in expectation for random queries, but the coherent term grows
+linearly in $g$. Summing $\mathcal{E}_{\mathrm{layer}}^2$ over groups gives
+\begin{equation}
+\label{eq:vq-scaling}
+\mathcal{E}_{\mathrm{layer}}^{\mathrm{VQ}} = O\!\left( g \cdot \sqrt{H_{kv}} \cdot \sigma_{\mathrm{vec}} \right),
+\end{equation}
+where $\sigma_{\mathrm{vec}}^2 = \mathbb{E}\|\Delta^K_j\|_2^2$ is the
+per-vector MSE of the vector quantizer. The layer error grows
+\emph{linearly} in the GQA ratio $g$.
+
+\paragraph{Case 2 — Per-channel scalar errors (KIVI-style).}
+For KIVI, each element $\Delta^K_{j,t,c}$ at channel $c$ is an independent
+scalar quantization residual with per-channel variance
+$\sigma_{\mathrm{ch}}^2$. The per-vector norm is
+$\|\Delta^K_{j,t}\|_2^2 \approx d \cdot \sigma_{\mathrm{ch}}^2$ in expectation,
+but the contributions to the attention logit from individual channels are
+\emph{uncorrelated with each other and with the query pattern}. The
+per-query error then behaves like a sum of $d$ random contributions
+(central-limit heuristic), and the cross-head sum behaves like a sum of $g$
+sub-Gaussian random variables whose variance grows only $\sqrt{g}$:
+\begin{equation}
+\label{eq:kivi-scaling}
+\mathcal{E}_{\mathrm{layer}}^{\mathrm{KIVI}} = O\!\left( \sqrt{g} \cdot \sqrt{H_{kv}} \cdot \sqrt{d} \cdot \sigma_{\mathrm{ch}} \right).
+\end{equation}
+The layer error grows as $\sqrt{g}$ in the GQA ratio, not linearly.
+
+\subsection{Crossover Inequality}
+\label{sec:theory-crossover}
+
+Comparing~\eqref{eq:vq-scaling} and~\eqref{eq:kivi-scaling}, VQ yields a
+lower layer-output error than KIVI when
+\begin{equation}
+\label{eq:crossover}
+\sigma_{\mathrm{vec}}^2 \;\lesssim\; \frac{d}{g} \cdot \sigma_{\mathrm{ch}}^2.
+\end{equation}
+At fixed bit-width and a reasonably well-behaved KV distribution, TurboQuant's
+rotation-then-Lloyd-Max pipeline achieves $\sigma_{\mathrm{vec}}^2 \approx
+\beta_b \cdot \sigma_{\mathrm{ch}}^2$ for some constant $\beta_b$ that depends
+on the bit-width $b$. The crossover condition becomes
+\begin{equation}
+\label{eq:crossover-b}
+\beta_b \;\lesssim\; d / g,
+\end{equation}
+which is easily satisfied at $b = 4$, $d = 128$, $g = 4$ (tolerance factor
+$\approx 32$), but becomes tight at $g = 8$ (tolerance $\approx 16$) and
+can be violated on models whose KV distributions concentrate mass in a few
+outlier channels, inflating $\beta_b$.
+
+This matches our empirical observations:
+
+\begin{itemize}
+  \item \textbf{Gemma-3-27B (GQA $2{:}1$)}: crossover tolerance $\approx 64$.
+  TurboQuant K4V4 is essentially lossless ($+0.7\%$ PPL) while KIVI-4
+  degrades by $+22.4\%$.
+  \item \textbf{Mistral-7B, Llama-3.1-8B (GQA $4{:}1$)}: crossover tolerance
+  $\approx 32$. TurboQuant still wins by roughly an order of magnitude.
+  \item \textbf{Qwen2.5-3B (GQA $8{:}1$)}: crossover tolerance $\approx 16$.
+  Combined with Qwen's outlier-heavy layer-0 KV distribution (which inflates
+  $\beta_b$), the inequality is violated and TurboQuant collapses. Outlier
+  protection (Section~\ref{sec:outlier}) directly attacks $\beta_b$ by
+  isolating the high-magnitude channels that drive it; adaptive allocation
+  (Section~\ref{sec:adaptive}) attacks the same problem from the other side
+  by raising the effective $b$ on the most sensitive layers.
+\end{itemize}
+
+\subsection{Limitations of the Analysis}
+\label{sec:theory-limitations}
+
+Our bound is a first-order worst-case perturbation analysis and omits several
+effects that matter in practice. First, the softmax is not globally
+Lipschitz in $\ell_\infty$; the bound tightens near uniform distributions and
+loosens when attention is strongly peaked. Second, the residual stream
+aggregates errors across layers, and deep layers can amplify or cancel errors
+nonlinearly through LayerNorm and MLP blocks, a higher-order effect we do not
+attempt to model. Third, we treat $\sigma_{\mathrm{vec}}$ and
+$\sigma_{\mathrm{ch}}$ as fixed; in reality both depend on the KV
+distribution and fluctuate across layers (which is precisely why adaptive
+allocation helps). Nevertheless, the linear-in-$g$ dependence of the VQ
+error is a structural property of shared-group codebook quantization and is
+independent of these refinements. Any tighter bound we could derive would
+still exhibit the same asymptotic scaling, and so the qualitative conclusion
+--- VQ is a better fit for low-$g$ models than high-$g$ models --- holds
+robustly.
