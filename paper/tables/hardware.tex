@@ -1,0 +1,21 @@
+\begin{tabular}{l l c c c}
+\toprule
+Model & Method & Prefill (ms) & Decode tok/s & KV Mem (MB) \\
+\midrule
+Gemma-3-27B & FP16 & 1007 & 5.5 & 669 \\
+ & TQ K4V4 & 1591 & 1.6 & 694 \\
+ & KIVI-4 & 1069 & 4.4 & 729 \\
+\midrule
+Mistral-7B & FP16 & 168 & 37.7 & 322 \\
+ & TQ K4V4 & 293 & 3.8 & 452 \\
+ & KIVI-4 & 183 & 7.7 & 354 \\
+\midrule
+Llama-3.1-8B & FP16 & 272 & 16.0 & 574 \\
+ & TQ K4V4 & 316 & 2.1 & 583 \\
+ & KIVI-4 & 233 & 7.7 & 599 \\
+\midrule
+Qwen2.5-3B & FP16 & 148 & 24.4 & 632 \\
+ & TQ K4V4 & 290 & 2.4 & 629 \\
+ & KIVI-4 & 130 & 7.8 & 632 \\
+\bottomrule
+\end{tabular}

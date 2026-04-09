@@ -1,0 +1,27 @@
+{
+  "model": "Qwen/Qwen2.5-3B-Instruct",
+  "method": "turboquant-adaptive-outlier",
+  "method_config": {
+    "key_bits": 4,
+    "value_bits": 4,
+    "residual_window": 128,
+    "outlier_file": "results/outlier/Qwen_Qwen2.5-3B-Instruct_outlier_profile.json",
+    "calibration_file": "results/calibration/Qwen_Qwen2.5-3B-Instruct_budget4.0.json"
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 7.932262099042099,
+      "loss": 2.0709382533595027,
+      "n_tokens": 299077
+    }
+  },
+  "timestamp": "2026-04-07T19:37:45Z",
+  "git_sha": "unknown"
+}

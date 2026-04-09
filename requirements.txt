@@ -1,0 +1,11 @@
+torch>=2.0.0
+scipy>=1.10.0
+transformers>=4.40.0
+accelerate>=0.25.0
+datasets>=2.14.0
+lm-eval>=0.4.0
+pyyaml>=6.0
+rouge-score>=0.1.2
+pandas>=2.0
+matplotlib>=3.7
+seaborn>=0.13

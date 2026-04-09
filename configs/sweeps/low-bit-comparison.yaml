@@ -1,0 +1,21 @@
+output_dir: results/low-bit-comparison
+models:
+  - configs/models/mistral-7b.yaml
+methods:
+  # FP16 baseline
+  - type: fp16
+  # Uniform 2-bit
+  - type: turboquant-v3
+    params: {key_bits: 2, value_bits: 2, residual_window: 128}
+  # Manual K3V2 (avg 2.5)
+  - type: turboquant-v3
+    params: {key_bits: 3, value_bits: 2, residual_window: 128}
+  # Adaptive at budget=2.5
+  - type: turboquant-adaptive
+    params:
+      budget: 2.5
+      residual_window: 128
+      calibration_file: results/calibration/mistralai_Mistral-7B-Instruct-v0.3_budget2.5_kvsplit.json
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048}

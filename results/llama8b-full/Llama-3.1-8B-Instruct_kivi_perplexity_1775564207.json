@@ -1,0 +1,24 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "method": "kivi",
+  "method_config": {
+    "bits": 4,
+    "residual_window": 128
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 7.285802388529382,
+      "loss": 1.9859275761391468,
+      "n_tokens": 289076
+    }
+  },
+  "timestamp": "2026-04-07T20:16:47Z",
+  "git_sha": "unknown"
+}

@@ -1,0 +1,24 @@
+{
+  "model": "mistralai/Mistral-7B-Instruct-v0.3",
+  "method": "kivi",
+  "method_config": {
+    "bits": 4,
+    "residual_window": 128
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 5.127969925186696,
+      "loss": 1.6347098547779837,
+      "n_tokens": 334660
+    }
+  },
+  "timestamp": "2026-04-07T00:05:09Z",
+  "git_sha": "unknown"
+}

@@ -1,0 +1,25 @@
+{
+  "model": "mistralai/Mistral-7B-Instruct-v0.3",
+  "method": "turboquant-v3",
+  "method_config": {
+    "key_bits": 4,
+    "value_bits": 2,
+    "residual_window": 128
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 5.049932555976838,
+      "loss": 1.619374887945975,
+      "n_tokens": 334660
+    }
+  },
+  "timestamp": "2026-04-07T00:36:56Z",
+  "git_sha": "unknown"
+}

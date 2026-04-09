@@ -1,0 +1,12 @@
+output_dir: results/llama70b-core
+models:
+  - configs/models/llama-3.1-70b.yaml
+methods:
+  - type: fp16
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  - type: kivi
+    params: {bits: 4, residual_window: 128}
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048, max_tokens: 50000}

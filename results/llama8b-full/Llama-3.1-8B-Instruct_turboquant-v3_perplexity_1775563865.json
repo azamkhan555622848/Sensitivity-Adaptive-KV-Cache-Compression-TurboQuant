@@ -1,0 +1,25 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "method": "turboquant-v3",
+  "method_config": {
+    "key_bits": 4,
+    "value_bits": 2,
+    "residual_window": 128
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 6.865512396451724,
+      "loss": 1.926510675393322,
+      "n_tokens": 289076
+    }
+  },
+  "timestamp": "2026-04-07T20:11:05Z",
+  "git_sha": "unknown"
+}

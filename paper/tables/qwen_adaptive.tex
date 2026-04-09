@@ -1,0 +1,24 @@
+\begin{tabular}{l c c c}
+\toprule
+Method & Avg bits & PPL & $\Delta$ FP16 \\
+\midrule
+KIVI-2 & 2.0 & \textbf{collapse} & -- \\
+TQ K2V2 (uniform) & 2.0 & \textbf{collapse} & -- \\
+TQ-Adaptive budget=2.0 & 2.0 & \textbf{collapse} & -- \\
+TQ-Adaptive budget=2.5 & 2.5 & 9.41 & +23.3\% \\
+TQ-Adaptive budget=3.0 & 3.0 & 8.42 & +10.4\% \\
+TQ K4V2 (uniform) & 3.0 & 56.14 & +636.2\% \\
+TQ K3V3 (uniform) & 3.0 & \textbf{collapse} & -- \\
+KIVI-4 & 4.0 & 7.89 & +3.4\% \\
+TQ-Adaptive budget=4.0 & 4.0 & 8.01 & +5.1\% \\
+TQ K4V4 (uniform) & 4.0 & 42.33 & +455.0\% \\
+TQ-Outlier K4V4 & 4.3 & 7.74 & +1.5\% \\
+TQ-Adapt+Outlier K4V4 & 4.3 & 7.93 & +4.0\% \\
+TQ K6V4 (uniform) & 5.0 & 7.71 & +1.1\% \\
+KIVI-6 & 6.0 & 7.64 & +0.2\% \\
+TQ-Adaptive budget=6.0 & 6.0 & 7.66 & +0.4\% \\
+TQ K6V6 (uniform) & 6.0 & 7.67 & +0.6\% \\
+TQ K8V8 (uniform) & 8.0 & 7.63 & +0.0\% \\
+FP16 & 16.0 & 7.63 &  \\
+\bottomrule
+\end{tabular}

@@ -1,0 +1,3 @@
+name: google/gemma-3-27b-it
+dtype: bfloat16
+max_seq_len: 8192

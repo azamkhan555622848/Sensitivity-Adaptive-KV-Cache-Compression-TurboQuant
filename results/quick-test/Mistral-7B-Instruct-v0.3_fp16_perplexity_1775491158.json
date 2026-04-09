@@ -1,0 +1,21 @@
+{
+  "model": "mistralai/Mistral-7B-Instruct-v0.3",
+  "method": "fp16",
+  "method_config": {},
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 4.936660927615519,
+      "loss": 1.5966891770752405,
+      "n_tokens": 334660
+    }
+  },
+  "timestamp": "2026-04-06T23:59:18Z",
+  "git_sha": "unknown"
+}

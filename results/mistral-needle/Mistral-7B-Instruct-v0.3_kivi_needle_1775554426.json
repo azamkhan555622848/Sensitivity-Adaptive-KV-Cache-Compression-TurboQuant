@@ -1,0 +1,102 @@
+{
+  "model": "mistralai/Mistral-7B-Instruct-v0.3",
+  "method": "kivi",
+  "method_config": {
+    "bits": 4,
+    "residual_window": 128
+  },
+  "benchmark": "needle",
+  "benchmark_config": {
+    "context_lengths": [
+      4096,
+      8192,
+      16384
+    ],
+    "positions": [
+      0.1,
+      0.3,
+      0.5,
+      0.7,
+      0.9
+    ]
+  },
+  "results": {
+    "4096_0.1": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 4114
+    },
+    "4096_0.3": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 4114
+    },
+    "4096_0.5": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 4114
+    },
+    "4096_0.7": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 4114
+    },
+    "4096_0.9": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 4114
+    },
+    "8192_0.1": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 8164
+    },
+    "8192_0.3": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 8164
+    },
+    "8192_0.5": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 8164
+    },
+    "8192_0.7": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 8164
+    },
+    "8192_0.9": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 8164
+    },
+    "16384_0.1": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 16264
+    },
+    "16384_0.3": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 16264
+    },
+    "16384_0.5": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 16264
+    },
+    "16384_0.7": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 16264
+    },
+    "16384_0.9": {
+      "result": "EXACT",
+      "response": "AURORA-7749",
+      "n_input_tokens": 16264
+    }
+  },
+  "timestamp": "2026-04-07T17:33:46Z",
+  "git_sha": "unknown"
+}

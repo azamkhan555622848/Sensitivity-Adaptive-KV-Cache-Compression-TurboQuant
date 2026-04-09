@@ -1,0 +1,109 @@
+{
+  "model": "google/gemma-3-27b-it",
+  "model_info": {
+    "n_layers": 62,
+    "head_dim": 128,
+    "n_heads": 32,
+    "n_kv_heads": 16,
+    "hidden_size": 5376,
+    "max_position_embeddings": 131072
+  },
+  "config": {
+    "prompt_len": 2048,
+    "gen_len": 32,
+    "mem_seq_len": 2048
+  },
+  "results": {
+    "fp16": {
+      "memory": {
+        "peak_memory_mb": 17552.8,
+        "model_memory_mb": 16883.9,
+        "cache_overhead_mb": 668.9
+      },
+      "latency": {
+        "prefill_ms": 1006.92,
+        "decode_ms": 5631.97,
+        "decode_tokens_per_sec": 5.5,
+        "total_ms": 6638.9
+      },
+      "theoretical_bits": 16,
+      "theoretical_ratio": 1.0
+    },
+    "tq_k4v4": {
+      "memory": {
+        "peak_memory_mb": 17585.7,
+        "model_memory_mb": 16892.0,
+        "cache_overhead_mb": 693.7
+      },
+      "latency": {
+        "prefill_ms": 1591.43,
+        "decode_ms": 19860.9,
+        "decode_tokens_per_sec": 1.6,
+        "total_ms": 21452.33
+      },
+      "theoretical_bits": 4,
+      "theoretical_ratio": 4.0
+    },
+    "tq_k4v2": {
+      "memory": {
+        "peak_memory_mb": 17578.3,
+        "model_memory_mb": 16892.0,
+        "cache_overhead_mb": 686.2
+      },
+      "latency": {
+        "prefill_ms": 1244.37,
+        "decode_ms": 17784.56,
+        "decode_tokens_per_sec": 1.7,
+        "total_ms": 19028.93
+      },
+      "theoretical_bits": 3,
+      "theoretical_ratio": 5.333333333333333
+    },
+    "tq_k2v2": {
+      "memory": {
+        "peak_memory_mb": 17571.7,
+        "model_memory_mb": 16892.0,
+        "cache_overhead_mb": 679.7
+      },
+      "latency": {
+        "prefill_ms": 1338.98,
+        "decode_ms": 19372.08,
+        "decode_tokens_per_sec": 1.6,
+        "total_ms": 20711.06
+      },
+      "theoretical_bits": 2,
+      "theoretical_ratio": 8.0
+    },
+    "kivi_4": {
+      "memory": {
+        "peak_memory_mb": 17621.2,
+        "model_memory_mb": 16892.0,
+        "cache_overhead_mb": 729.2
+      },
+      "latency": {
+        "prefill_ms": 1069.44,
+        "decode_ms": 7003.79,
+        "decode_tokens_per_sec": 4.4,
+        "total_ms": 8073.23
+      },
+      "theoretical_bits": 4,
+      "theoretical_ratio": 4.0
+    },
+    "kivi_2": {
+      "memory": {
+        "peak_memory_mb": 17621.2,
+        "model_memory_mb": 16892.0,
+        "cache_overhead_mb": 729.2
+      },
+      "latency": {
+        "prefill_ms": 953.46,
+        "decode_ms": 7751.36,
+        "decode_tokens_per_sec": 4.0,
+        "total_ms": 8704.81
+      },
+      "theoretical_bits": 2,
+      "theoretical_ratio": 8.0
+    }
+  },
+  "timestamp": "2026-04-09T20:37:48Z"
+}

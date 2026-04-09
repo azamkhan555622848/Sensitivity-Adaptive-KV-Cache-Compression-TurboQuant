@@ -1,0 +1,343 @@
+{
+  "model": "Qwen/Qwen2.5-3B-Instruct",
+  "model_info": {
+    "n_layers": 36,
+    "head_dim": 128,
+    "n_heads": 16,
+    "n_kv_heads": 2,
+    "hidden_size": 2048,
+    "max_position_embeddings": 32768
+  },
+  "threshold": 5.0,
+  "n_samples": 16,
+  "layer_outliers": {
+    "0": {
+      "key_outlier_count": 26,
+      "value_outlier_count": 1,
+      "key_outlier_channels": [
+        49,
+        50,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        62,
+        63,
+        113,
+        114,
+        115,
+        117,
+        118,
+        120,
+        121,
+        122,
+        123,
+        124,
+        125,
+        126,
+        127
+      ],
+      "value_outlier_channels": [
+        22
+      ]
+    },
+    "1": {
+      "key_outlier_count": 4,
+      "value_outlier_count": 1,
+      "key_outlier_channels": [
+        38,
+        60,
+        109,
+        114
+      ],
+      "value_outlier_channels": [
+        108
+      ]
+    },
+    "2": {
+      "key_outlier_count": 3,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        48,
+        100,
+        112
+      ],
+      "value_outlier_channels": []
+    },
+    "3": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "4": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "5": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        115
+      ],
+      "value_outlier_channels": []
+    },
+    "6": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        118
+      ],
+      "value_outlier_channels": []
+    },
+    "7": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        114
+      ],
+      "value_outlier_channels": []
+    },
+    "8": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        117
+      ],
+      "value_outlier_channels": []
+    },
+    "9": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        118
+      ],
+      "value_outlier_channels": []
+    },
+    "10": {
+      "key_outlier_count": 2,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        56,
+        115
+      ],
+      "value_outlier_channels": []
+    },
+    "11": {
+      "key_outlier_count": 2,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        51,
+        116
+      ],
+      "value_outlier_channels": []
+    },
+    "12": {
+      "key_outlier_count": 2,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        62,
+        119
+      ],
+      "value_outlier_channels": []
+    },
+    "13": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        54
+      ],
+      "value_outlier_channels": []
+    },
+    "14": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        52
+      ],
+      "value_outlier_channels": []
+    },
+    "15": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        116
+      ],
+      "value_outlier_channels": []
+    },
+    "16": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        119
+      ],
+      "value_outlier_channels": []
+    },
+    "17": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "18": {
+      "key_outlier_count": 4,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        51,
+        61,
+        125,
+        127
+      ],
+      "value_outlier_channels": []
+    },
+    "19": {
+      "key_outlier_count": 3,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        60,
+        63,
+        123
+      ],
+      "value_outlier_channels": []
+    },
+    "20": {
+      "key_outlier_count": 2,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        59,
+        60
+      ],
+      "value_outlier_channels": []
+    },
+    "21": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        126
+      ],
+      "value_outlier_channels": []
+    },
+    "22": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "23": {
+      "key_outlier_count": 2,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        60,
+        124
+      ],
+      "value_outlier_channels": []
+    },
+    "24": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "25": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "26": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        51
+      ],
+      "value_outlier_channels": []
+    },
+    "27": {
+      "key_outlier_count": 5,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        60,
+        61,
+        63,
+        126,
+        127
+      ],
+      "value_outlier_channels": []
+    },
+    "28": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        116
+      ],
+      "value_outlier_channels": []
+    },
+    "29": {
+      "key_outlier_count": 2,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        58,
+        122
+      ],
+      "value_outlier_channels": []
+    },
+    "30": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "31": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "32": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "33": {
+      "key_outlier_count": 0,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [],
+      "value_outlier_channels": []
+    },
+    "34": {
+      "key_outlier_count": 1,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        52
+      ],
+      "value_outlier_channels": []
+    },
+    "35": {
+      "key_outlier_count": 3,
+      "value_outlier_count": 0,
+      "key_outlier_channels": [
+        114,
+        115,
+        127
+      ],
+      "value_outlier_channels": []
+    }
+  },
+  "layer0_comparison": {
+    "standard_key_mse": 1.9780946969985962,
+    "outlier_key_mse": 0.021005552262067795,
+    "standard_value_mse": 0.0006891705561429262,
+    "outlier_value_mse": 0.0005566541221924126,
+    "key_outlier_count": 26,
+    "value_outlier_count": 1
+  },
+  "timestamp": "2026-04-07T17:59:41Z"
+}

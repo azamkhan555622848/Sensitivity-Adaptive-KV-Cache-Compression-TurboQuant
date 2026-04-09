@@ -1,0 +1,29 @@
+output_dir: results/adaptive-comparison
+models:
+  - configs/models/mistral-7b.yaml
+methods:
+  # FP16 baseline
+  - type: fp16
+  # Uniform 3-bit (K3V3) — same total budget as adaptive
+  - type: turboquant-v3
+    params: {key_bits: 3, value_bits: 3, residual_window: 128}
+  # TQ-V3 K4V2 — manual asymmetric matching adaptive's average
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 2, residual_window: 128}
+  # Adaptive allocation at budget=3.0 (from calibration)
+  - type: turboquant-adaptive
+    params:
+      budget: 3.0
+      residual_window: 128
+      calibration_file: results/calibration/mistralai_Mistral-7B-Instruct-v0.3_budget3.0_kvsplit.json
+  # Also compare at 4-bit budget
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  # KIVI baselines at same budgets
+  - type: kivi
+    params: {bits: 4, residual_window: 128}
+  - type: kivi
+    params: {bits: 2, residual_window: 128}
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048}

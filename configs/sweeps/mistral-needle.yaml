@@ -1,0 +1,16 @@
+output_dir: results/mistral-needle
+models:
+  - configs/models/mistral-7b.yaml
+methods:
+  - type: fp16
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  - type: turboquant-v3
+    params: {key_bits: 2, value_bits: 2, residual_window: 128}
+  - type: kivi
+    params: {bits: 4, residual_window: 128}
+benchmarks:
+  - type: needle
+    params:
+      context_lengths: [4096, 8192, 16384]
+      positions: [0.1, 0.3, 0.5, 0.7, 0.9]

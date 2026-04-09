@@ -1,0 +1,25 @@
+{
+  "model": "mistralai/Mistral-7B-Instruct-v0.3",
+  "method": "turboquant-adaptive",
+  "method_config": {
+    "budget": 2.5,
+    "residual_window": 128,
+    "calibration_file": "results/calibration/mistralai_Mistral-7B-Instruct-v0.3_budget2.5_kvsplit.json"
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 5.19950131679832,
+      "loss": 1.6485627203729158,
+      "n_tokens": 334660
+    }
+  },
+  "timestamp": "2026-04-07T01:05:43Z",
+  "git_sha": "unknown"
+}

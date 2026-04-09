@@ -1,0 +1,26 @@
+{
+  "model": "google/gemma-3-27b-it",
+  "method": "turboquant-v3",
+  "method_config": {
+    "key_bits": 4,
+    "value_bits": 2,
+    "residual_window": 128
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048,
+    "max_tokens": 50000
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 7.681161526612404,
+      "loss": 2.038770776168221,
+      "n_tokens": 292282
+    }
+  },
+  "timestamp": "2026-04-08T01:40:01Z",
+  "git_sha": "unknown"
+}

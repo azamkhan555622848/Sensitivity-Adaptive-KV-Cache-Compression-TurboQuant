@@ -1,0 +1,25 @@
+{
+  "model": "google/gemma-3-27b-it",
+  "method": "kivi",
+  "method_config": {
+    "bits": 2,
+    "residual_window": 128
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048,
+    "max_tokens": 50000
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 439176.98939179466,
+      "loss": 12.992657775709759,
+      "n_tokens": 292282
+    }
+  },
+  "timestamp": "2026-04-08T02:06:09Z",
+  "git_sha": "unknown"
+}

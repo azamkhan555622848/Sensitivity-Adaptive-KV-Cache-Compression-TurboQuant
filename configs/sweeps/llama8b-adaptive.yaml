@@ -1,0 +1,15 @@
+output_dir: results/llama8b-adaptive
+models:
+  - configs/models/llama-3.1-8b.yaml
+methods:
+  - type: fp16
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  - type: turboquant-adaptive
+    params:
+      budget: 4.0
+      residual_window: 128
+      calibration_file: results/calibration/meta-llama_Llama-3.1-8B-Instruct_budget4.0.json
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048}

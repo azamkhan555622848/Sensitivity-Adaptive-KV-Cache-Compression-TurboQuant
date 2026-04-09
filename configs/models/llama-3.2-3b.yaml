@@ -1,0 +1,3 @@
+name: meta-llama/Llama-3.2-3B-Instruct
+dtype: bfloat16
+max_seq_len: 8192

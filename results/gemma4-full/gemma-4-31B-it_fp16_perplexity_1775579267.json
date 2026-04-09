@@ -1,0 +1,22 @@
+{
+  "model": "google/gemma-4-31B-it",
+  "method": "fp16",
+  "method_config": {},
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048,
+    "max_tokens": 50000
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 690.7020713242125,
+      "loss": 6.53770857496724,
+      "n_tokens": 292281
+    }
+  },
+  "timestamp": "2026-04-08T00:27:47Z",
+  "git_sha": "unknown"
+}

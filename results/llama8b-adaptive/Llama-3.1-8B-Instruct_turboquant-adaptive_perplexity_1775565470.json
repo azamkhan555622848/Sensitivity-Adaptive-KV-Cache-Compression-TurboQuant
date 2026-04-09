@@ -1,0 +1,25 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "method": "turboquant-adaptive",
+  "method_config": {
+    "budget": 4.0,
+    "residual_window": 128,
+    "calibration_file": "results/calibration/meta-llama_Llama-3.1-8B-Instruct_budget4.0.json"
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 6.7278325032436195,
+      "loss": 1.9062530268856632,
+      "n_tokens": 289076
+    }
+  },
+  "timestamp": "2026-04-07T20:37:50Z",
+  "git_sha": "unknown"
+}

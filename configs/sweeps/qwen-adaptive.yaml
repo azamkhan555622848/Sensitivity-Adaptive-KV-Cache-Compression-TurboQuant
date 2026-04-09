@@ -1,0 +1,20 @@
+output_dir: results/qwen-adaptive
+models:
+  - configs/models/qwen2.5-3b.yaml
+methods:
+  - type: fp16
+  # Uniform 4-bit
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  # Adaptive (from calibration)
+  - type: turboquant-adaptive
+    params:
+      budget: 4.0
+      residual_window: 128
+      calibration_file: results/calibration/Qwen_Qwen2.5-3B-Instruct_budget4.0.json
+  # Uniform 6-bit (same "premium" cost for comparison)
+  - type: turboquant-v3
+    params: {key_bits: 6, value_bits: 6, residual_window: 128}
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048}

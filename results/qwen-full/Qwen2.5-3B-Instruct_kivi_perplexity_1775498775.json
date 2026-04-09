@@ -1,0 +1,24 @@
+{
+  "model": "Qwen/Qwen2.5-3B-Instruct",
+  "method": "kivi",
+  "method_config": {
+    "bits": 6,
+    "residual_window": 128
+  },
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 7.641853406602081,
+      "loss": 2.033640166244813,
+      "n_tokens": 299077
+    }
+  },
+  "timestamp": "2026-04-07T02:06:15Z",
+  "git_sha": "unknown"
+}

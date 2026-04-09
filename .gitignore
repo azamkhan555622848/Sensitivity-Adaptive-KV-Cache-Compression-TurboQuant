@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+.pytest_cache/
+venv/
+env/
+.venv/
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Large model files and caches
+*.pt
+*.bin
+*.safetensors
+.cache/
+
+# Top-level logs (keep per-experiment JSONs in results/<sweep>/)
+results/*.log
+results/*.json
+
+# Claude / memory
+.claude/

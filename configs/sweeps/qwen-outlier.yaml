@@ -1,0 +1,32 @@
+output_dir: results/qwen-outlier
+models:
+  - configs/models/qwen2.5-3b.yaml
+methods:
+  - type: fp16
+  # Standard TQ K4V4 (collapses on Qwen)
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  # Outlier-aware K4V4
+  - type: turboquant-outlier
+    params:
+      key_bits: 4
+      value_bits: 4
+      residual_window: 128
+      outlier_file: results/outlier/Qwen_Qwen2.5-3B-Instruct_outlier_profile.json
+  # Adaptive only (from earlier)
+  - type: turboquant-adaptive
+    params:
+      budget: 4.0
+      residual_window: 128
+      calibration_file: results/calibration/Qwen_Qwen2.5-3B-Instruct_budget4.0.json
+  # Combined: adaptive + outlier
+  - type: turboquant-adaptive-outlier
+    params:
+      key_bits: 4
+      value_bits: 4
+      residual_window: 128
+      outlier_file: results/outlier/Qwen_Qwen2.5-3B-Instruct_outlier_profile.json
+      calibration_file: results/calibration/Qwen_Qwen2.5-3B-Instruct_budget4.0.json
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048}

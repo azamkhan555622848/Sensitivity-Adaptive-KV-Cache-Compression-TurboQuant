@@ -1,0 +1,21 @@
+output_dir: results/adaptive-4bit
+models:
+  - configs/models/mistral-7b.yaml
+methods:
+  # FP16 baseline (skip re-running, use existing)
+  - type: fp16
+  # Uniform K4V4 (already have this, but run again for consistency)
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  # Adaptive budget=4.0 with K/V split: avg K=5.19, V=2.81
+  - type: turboquant-adaptive
+    params:
+      budget: 4.0
+      residual_window: 128
+      calibration_file: results/calibration/mistralai_Mistral-7B-Instruct-v0.3_budget4.0_kvsplit.json
+  # Manual approximation: K6V2 (avg 4.0)
+  - type: turboquant-v3
+    params: {key_bits: 6, value_bits: 2, residual_window: 128}
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048}

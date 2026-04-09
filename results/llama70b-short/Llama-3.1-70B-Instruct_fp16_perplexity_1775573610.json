@@ -1,0 +1,22 @@
+{
+  "model": "meta-llama/Llama-3.1-70B-Instruct",
+  "method": "fp16",
+  "method_config": {},
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 512,
+    "max_tokens": 50000
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 3.828258325543439,
+      "loss": 1.3424099544756396,
+      "n_tokens": 289076
+    }
+  },
+  "timestamp": "2026-04-07T22:53:30Z",
+  "git_sha": "unknown"
+}
