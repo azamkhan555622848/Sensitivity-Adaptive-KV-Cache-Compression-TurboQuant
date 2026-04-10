@@ -47,10 +47,16 @@ def calibrate(model, tokenizer, n_samples=16, max_seq_len=512, dataset_name="c4"
                           max_length=max_seq_len, padding=True)
     device = next(model.parameters()).device
 
-    # Find the layers module. Supports standard HF layouts (model.model.layers)
-    # and single-layer custom layouts.
+    # Find the layers module. Supports standard HF layouts (model.model.layers),
+    # Gemma-3 (model.model.language_model.model.layers), and single-layer layouts.
     base = getattr(model, "model", model)
     layers_mod = getattr(base, "layers", None)
+    if layers_mod is None:
+        # Gemma-3 nests under language_model.model
+        lm = getattr(base, "language_model", None)
+        if lm is not None:
+            inner = getattr(lm, "model", lm)
+            layers_mod = getattr(inner, "layers", None)
     if layers_mod is None:
         raise RuntimeError("Could not find layers attribute on model for calibration")
 

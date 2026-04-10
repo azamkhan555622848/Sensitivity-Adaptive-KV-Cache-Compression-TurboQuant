@@ -1,0 +1,22 @@
+{
+  "model": "Qwen/Qwen2.5-32B-Instruct",
+  "method": "fp16",
+  "method_config": {},
+  "benchmark": "perplexity",
+  "benchmark_config": {
+    "datasets": [
+      "wikitext2"
+    ],
+    "max_seq_len": 2048,
+    "max_tokens": 50000
+  },
+  "results": {
+    "wikitext2": {
+      "perplexity": 3.971832537531004,
+      "loss": 1.379227584551691,
+      "n_tokens": 49999
+    }
+  },
+  "timestamp": "2026-04-10T13:45:26Z",
+  "git_sha": "unknown"
+}

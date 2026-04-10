@@ -1,0 +1,28 @@
+output_dir: results/qwen32b-adaptive
+models:
+  - configs/models/qwen2.5-32b.yaml
+methods:
+  - type: fp16
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  - type: turboquant-adaptive
+    params:
+      budget: 4.0
+      residual_window: 128
+      calibration_file: results/calibration/Qwen_Qwen2.5-32B-Instruct_budget4.0.json
+  - type: turboquant-outlier
+    params:
+      key_bits: 4
+      value_bits: 4
+      residual_window: 128
+      outlier_file: results/outlier/Qwen_Qwen2.5-32B-Instruct_outlier_profile.json
+  - type: turboquant-adaptive-outlier
+    params:
+      key_bits: 4
+      value_bits: 4
+      residual_window: 128
+      outlier_file: results/outlier/Qwen_Qwen2.5-32B-Instruct_outlier_profile.json
+      calibration_file: results/calibration/Qwen_Qwen2.5-32B-Instruct_budget4.0.json
+benchmarks:
+  - type: perplexity
+    params: {datasets: [wikitext2], max_seq_len: 2048, max_tokens: 50000}

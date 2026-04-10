@@ -1,0 +1,15 @@
+output_dir: results/downstream
+models:
+  - configs/models/mistral-7b.yaml
+methods:
+  - type: fp16
+  - type: turboquant-v3
+    params: {key_bits: 4, value_bits: 4, residual_window: 128}
+  - type: kivi
+    params: {bits: 4, residual_window: 128}
+benchmarks:
+  - type: downstream
+    params:
+      tasks: [mmlu, arc_challenge, hellaswag, winogrande]
+      batch_size: 1
+      limit: 100
