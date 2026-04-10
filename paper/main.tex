@@ -116,6 +116,13 @@ We build on the reference PyTorch implementation of TurboQuant by
 \citet{tonbistudio_turboquant_pytorch} and list our modifications explicitly
 in the supplement.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.95\linewidth]{figures/killer.pdf}
+\caption{\textbf{GQA amplification in action.} Relative WikiText-2 perplexity degradation (log scale) for TurboQuant K4V4, KIVI-4, TurboQuant-Adaptive, and TurboQuant-Outlier across five models at four GQA ratios. TurboQuant's advantage over KIVI decreases monotonically with GQA ratio, crossing over between $5{:}1$ and $8{:}1$. On Qwen2.5-3B (GQA $8{:}1$), uniform TurboQuant collapses while our outlier-aware variant recovers near-FP16 quality.}
+\label{fig:killer}
+\end{figure}
+
 \section{Background and Related Work}
 \label{sec:related}
 
@@ -325,7 +332,7 @@ As noted in Section~\ref{sec:hardware}, our Python reference is not production-r
 The 70B model's weights alone consume almost all of our $144$ GB VRAM in BF16. We were unable to run compressed inference on it because the decompression overhead of our reference implementation tips the peak memory past the available budget, producing OOM errors. We report only the FP16 baseline ($3.40$ PPL on WikiText-2 at $2{,}048$ tokens). A production implementation that decompresses in place would avoid this issue.
 
 \paragraph{Gemma-3 calibration.}
-Our sensitivity profiler produces NaN values on the final layers of Gemma-3-27B, which we traced to the model's mixed sliding/full attention layer structure interacting with our calibration harness. We worked around this by disabling adaptive allocation for Gemma-3 (all reported Gemma-3 results use uniform bit-widths), and the excellent near-lossless baseline performance indicates adaptive allocation is not needed there. Fixing the profiler for sliding-attention models is a direction for future work.
+Gemma-3-27B has a mixed sliding/full attention structure that required a hook-based calibration path (hooking \texttt{k\_proj}/\texttt{v\_proj} directly) rather than reading from the cache. After this fix, all $62$ layers produce finite sensitivity values and the adaptive allocator runs successfully, though the resulting allocation does not improve over uniform K4V4 since Gemma-3 is already near-lossless at $+0.7\%$ perplexity.
 
 \paragraph{Calibration domain sensitivity.}
 We use $16$ samples from C4 or WikiText-2 for calibration. We have not studied how sensitive the resulting allocation is to calibration-domain mismatch; existing sensitivity-aware weight quantization work suggests it is fairly robust, but the question deserves direct study in the KV cache setting.
