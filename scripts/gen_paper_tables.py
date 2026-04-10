@@ -78,6 +78,7 @@ def table_main_results():
         ("gemma-3-27b-it", "Gemma-3-27B", "2:1"),
         ("Mistral-7B-Instruct-v0.3", "Mistral-7B", "4:1"),
         ("Llama-3.1-8B-Instruct", "Llama-3.1-8B", "4:1"),
+        ("Qwen2.5-32B-Instruct", "Qwen2.5-32B", "5:1"),
         ("Qwen2.5-3B-Instruct", "Qwen2.5-3B", "8:1"),
     ]
     method_cols = ["FP16", "TQ K4V4", "TQ K4V2", "TQ K2V2", "KIVI-4", "KIVI-2"]

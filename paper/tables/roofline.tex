@@ -1,0 +1,33 @@
+\begin{tabular}{l l c c c c}
+\toprule
+Model & Method & Bits/elem & Measured tok/s & Projected tok/s & Compression \\
+\midrule
+Mistral-7B & FP16 & 16.0 & 37.7 & -- & 1.00$\times$ \\
+ & TQ K4V4 & 4.0 & 3.8 & 150.8 & 4.00$\times$ \\
+ & TQ K4V2 & 3.0 & 3.8 & 201.1 & 5.33$\times$ \\
+ & TQ K2V2 & 2.0 & 3.9 & 301.6 & 8.00$\times$ \\
+ & KIVI-4 & 4.5 & 7.7 & 134.0 & 3.56$\times$ \\
+ & KIVI-2 & 2.5 & 7.8 & 241.3 & 6.40$\times$ \\
+\midrule
+Llama-3.1-8B & FP16 & 16.0 & 16.0 & -- & 1.00$\times$ \\
+ & TQ K4V4 & 4.0 & 2.1 & 64.0 & 4.00$\times$ \\
+ & TQ K4V2 & 3.0 & 2.6 & 85.3 & 5.33$\times$ \\
+ & TQ K2V2 & 2.0 & 2.6 & 128.0 & 8.00$\times$ \\
+ & KIVI-4 & 4.5 & 7.7 & 56.9 & 3.56$\times$ \\
+ & KIVI-2 & 2.5 & 7.8 & 102.4 & 6.40$\times$ \\
+\midrule
+Qwen-3B & FP16 & 16.0 & 24.4 & -- & 1.00$\times$ \\
+ & TQ K4V4 & 4.0 & 2.4 & 97.6 & 4.00$\times$ \\
+ & TQ K4V2 & 3.0 & 2.5 & 130.1 & 5.33$\times$ \\
+ & TQ K2V2 & 2.0 & 2.3 & 195.2 & 8.00$\times$ \\
+ & KIVI-4 & 4.5 & 7.8 & 86.8 & 3.56$\times$ \\
+ & KIVI-2 & 2.5 & 7.3 & 156.2 & 6.40$\times$ \\
+\midrule
+Gemma-3-27B & FP16 & 16.0 & 5.5 & -- & 1.00$\times$ \\
+ & TQ K4V4 & 4.0 & 1.6 & 22.0 & 4.00$\times$ \\
+ & TQ K4V2 & 3.0 & 1.7 & 29.3 & 5.33$\times$ \\
+ & TQ K2V2 & 2.0 & 1.6 & 44.0 & 8.00$\times$ \\
+ & KIVI-4 & 4.5 & 4.4 & 19.6 & 3.56$\times$ \\
+ & KIVI-2 & 2.5 & 4.0 & 35.2 & 6.40$\times$ \\
+\bottomrule
+\end{tabular}
