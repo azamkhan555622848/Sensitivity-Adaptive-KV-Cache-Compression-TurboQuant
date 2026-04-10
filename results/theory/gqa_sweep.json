@@ -1,0 +1,35 @@
+{
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "n_heads_original": 32,
+  "n_kv_heads_original": 8,
+  "results": [
+    {
+      "n_kv_heads_target": 8,
+      "gqa_ratio": 4,
+      "fp16": 6.244440729099786,
+      "tq_k4v4": 6.362952661845881,
+      "kivi4": 7.026561617866103
+    },
+    {
+      "n_kv_heads_target": 4,
+      "gqa_ratio": 8,
+      "fp16": 983.133124002768,
+      "tq_k4v4": 1010.2427194942126,
+      "kivi4": 1009.4348081306855
+    },
+    {
+      "n_kv_heads_target": 2,
+      "gqa_ratio": 16,
+      "fp16": 2573.9389235061967,
+      "tq_k4v4": 2602.930539003485,
+      "kivi4": 2607.0987699729462
+    },
+    {
+      "n_kv_heads_target": 1,
+      "gqa_ratio": 32,
+      "fp16": 6690.476805923671,
+      "tq_k4v4": 6776.669676177006,
+      "kivi4": 6733.435326032955
+    }
+  ]
+}
