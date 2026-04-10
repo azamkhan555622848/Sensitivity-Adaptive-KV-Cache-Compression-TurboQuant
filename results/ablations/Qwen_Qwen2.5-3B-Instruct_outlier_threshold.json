@@ -1,0 +1,38 @@
+{
+  "ablation": "outlier_threshold",
+  "results": [
+    {
+      "threshold": 3.0,
+      "total_key_outliers": 168,
+      "total_value_outliers": 20,
+      "max_key_outliers_per_layer": 28,
+      "ppl": 7.661445886851009,
+      "n_layers": 36
+    },
+    {
+      "threshold": 5.0,
+      "total_key_outliers": 78,
+      "total_value_outliers": 2,
+      "max_key_outliers_per_layer": 27,
+      "ppl": 7.708170310640925,
+      "n_layers": 36
+    },
+    {
+      "threshold": 7.0,
+      "total_key_outliers": 44,
+      "total_value_outliers": 0,
+      "max_key_outliers_per_layer": 24,
+      "ppl": 7.703238561335246,
+      "n_layers": 36
+    },
+    {
+      "threshold": 10.0,
+      "total_key_outliers": 29,
+      "total_value_outliers": 0,
+      "max_key_outliers_per_layer": 20,
+      "ppl": 7.720513501921536,
+      "n_layers": 36
+    }
+  ],
+  "model": "Qwen/Qwen2.5-3B-Instruct"
+}
