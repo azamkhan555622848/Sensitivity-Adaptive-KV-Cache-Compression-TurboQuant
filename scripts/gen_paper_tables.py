@@ -201,6 +201,7 @@ def table_hardware():
         ("gemma-3-27b-it", "Gemma-3-27B"),
         ("Mistral-7B-Instruct-v0.3", "Mistral-7B"),
         ("Llama-3.1-8B-Instruct", "Llama-3.1-8B"),
+        ("Qwen2.5-32B-Instruct", "Qwen2.5-32B"),
         ("Qwen2.5-3B-Instruct", "Qwen2.5-3B"),
     ]
     methods = [("fp16", "FP16"), ("tq_k4v4", "TQ K4V4"), ("kivi_4", "KIVI-4")]

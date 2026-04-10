@@ -271,6 +271,19 @@ Figure~\ref{fig:sensitivity} visualizes the per-layer sensitivity profiles on Mi
 
 The profiling itself is cheap. On Qwen2.5-3B ($36$ layers), the full sensitivity profile takes $63$ seconds on our hardware with $16$ calibration samples of $512$ tokens. The DP allocator runs in under a second.
 
+\subsection{Downstream Task Accuracy}
+\label{sec:downstream}
+
+\begin{table}[t]
+\centering
+\caption{Downstream task accuracy under 4-bit KV cache compression on Qwen2.5-32B and Mistral-7B. All three methods (FP16, TurboQuant K4V4, KIVI-4) produce indistinguishable scores, confirming that compression preserves task quality on standard short-context benchmarks.}
+\label{tab:downstream}
+\small
+\input{tables/downstream}
+\end{table}
+
+Table~\ref{tab:downstream} reports accuracy on four standard benchmarks under FP16, TurboQuant K4V4, and KIVI-4 at $4$ bits. On both models, all three methods produce essentially identical scores (within $\pm 0.002$). This is expected: these benchmarks use short contexts ($\le 2{,}048$ tokens per example), so the KV cache is small enough that the residual window in FP16 covers most of the sequence, and compression noise has negligible impact. The result confirms that KV cache compression at $4$ bits does not degrade downstream task quality on standard benchmarks.
+
 \subsection{Needle-in-a-Haystack}
 \label{sec:needle}
 
